@@ -36,6 +36,9 @@ class CxQuery(object):
         return self
 
     def add_filter(self, fit):
+        if 'filters' not in self._request_data:
+            self._request_data['filters'] = []
+
         if fit['type'] == 'user':
             fit['group'] = self._group
 
@@ -43,7 +46,7 @@ class CxQuery(object):
         return self
 
     def add_fields(self, fds=['uniqueUsers']):
-        self._request_data['fields'] = fds
+        self._request_data['fields'] = self._request_data['historyFields'] = fds
         return self
 
     def add_dates(self, dates):
@@ -109,7 +112,7 @@ class CxQuery(object):
                 data[token]['total'] = jd['data']['events']
                 data[token]['fetched'][0] = min(data[token]['fetched'][0], dates[0])
                 data[token]['fetched'][1] = max(data[token]['fetched'][1], dates[1])
-                data[token]['fetched'][2] = (data[token]['fetched'][1] - data[token]['fetched'][0]) / 86400
+                data[token]['fetched'][2] = (data[token]['fetched'][1] - data[token]['fetched'][0]) // 86400
 
         # cache result
         with open(pickle_file, 'wb') as handle:

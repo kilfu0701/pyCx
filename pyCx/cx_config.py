@@ -4,12 +4,17 @@ import yaml
 """
 [env.yaml]
 
-cxense_api:
-  default:
-    site_id: your_id
-    username: your_name
-    secret: your_key
-    apiserver: https://api.cxense.com
+default:
+  site_id: your_id
+  username: your_name
+  secret: your_key
+  apiserver: https://api.cxense.com
+
+zuu:
+  site_id: your_id
+  username: your_name
+  secret: your_key
+  apiserver: https://api.cxense.com
 """
 
 class CxConfig(object):
