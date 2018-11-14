@@ -21,5 +21,5 @@ def date_range(start, end):
     e_date = datetime.strptime(end, '%Y-%m-%d')
     s_date_ts = int(s_date.timestamp())
     e_date_ts = int(e_date.timestamp())
-    intervals = (e_date_ts - s_date_ts) / 86400
+    intervals = (e_date_ts - s_date_ts) // 86400
     return [s_date_ts, e_date_ts, intervals]
