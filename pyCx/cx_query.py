@@ -7,7 +7,6 @@ import pandas as pd
 from .cx_url import CxenseURL
 from .cx_filter import CxFilter as CF
 from .helpers import yesterday
-from .decorators import uri, with_base_parameters
 
 class CxQuery(object):
     def __init__(self, cx, cache_dir='/tmp/.pyCx-cache'):
@@ -21,15 +20,18 @@ class CxQuery(object):
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
 
-    @uri(CxenseURL.TRAFFIC)
-    @with_base_parameters
     def get_traffic(self, user_token, dates=yesterday()):
-        self.add_filter(CF.User(user_token)) \
+        self.uri(CxenseURL.TRAFFIC) \
+            .add_filter(CF.User(user_token)) \
             .add_fields(['events', 'uniqueUsers']) \
             .add_dates(dates)
 
-        status, header, content = self._exec()
+        status, header, content = self.send()
         return content
+
+    def uri(self, url_enum):
+        self._request_uri = url_enum.value
+        return self
 
     def apply_group(self, group):
         self._group = group
@@ -55,10 +57,11 @@ class CxQuery(object):
     def reset(self):
         self._request_data = {
             'filters': [],
+            'siteIds': [self._config['site_id']],
         }
         return self
 
-    def _exec(self):
+    def send(self):
         return self.cx.execute(self._request_uri, json.dumps(self._request_data))
 
     """
