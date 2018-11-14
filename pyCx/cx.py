@@ -18,7 +18,7 @@ class Cx(object):
     @with_env('home')
     def __init__(self, cx_config=None, cache_dir='/tmp/.pyCx-cache'):
         if cx_config is not None:
-            self._config = cx_config
+            self._config = cx_config.value()
 
         # init CxQuery
         self._query = CxQuery(self, cache_dir=cache_dir)
