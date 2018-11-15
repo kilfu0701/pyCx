@@ -9,7 +9,7 @@ import urllib.parse as urlparse
 import yaml
 
 from .cx_query import CxQuery
-from .cx_config import get_config
+from .cx_config import get_config, CxConfig
 from .cx_url import CxenseURL
 from .decorators import with_env
 
@@ -17,7 +17,7 @@ class Cx(object):
 
     @with_env('home')
     def __init__(self, cx_config=None, cache_dir='/tmp/.pyCx-cache'):
-        if cx_config is not None:
+        if isinstance(cx_config, CxConfig):
             self._config = cx_config.value()
 
         # init CxQuery

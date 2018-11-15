@@ -1,7 +1,8 @@
-class CxFilter(object):
+from enum import Enum
 
+class CxFilter(object):
     @staticmethod
-    def User(user_token, group=''):
+    def User(user_token, group='cx'):
         # e.g.
         #   group='thk'
         #   user_token='RandomStringHere'
@@ -33,3 +34,6 @@ class CxFilter(object):
             'items': items,
         }
 
+class CxFilterOp(Enum):
+    And = 'and'
+    Or  = 'or'
