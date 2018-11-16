@@ -23,3 +23,12 @@ def date_range(start, end):
     e_date_ts = int(e_date.timestamp())
     intervals = (e_date_ts - s_date_ts) // 86400
     return [s_date_ts, e_date_ts, intervals]
+
+def dates_to_array(dates, formats='%m/%d'):
+    dt = []
+    ds = dates[0]
+    while ds < dates[1]:
+        dt.append(datetime.fromtimestamp(ds).strftime(formats))
+        ds += 86400
+
+    return dt

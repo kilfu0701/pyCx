@@ -1,10 +1,12 @@
 import http.client as httplib
 import os
+import sys
 import hmac
 import json
 import hashlib
 import datetime
 import urllib.parse as urlparse
+import logging
 
 import yaml
 
@@ -16,12 +18,15 @@ from .decorators import with_env
 class Cx(object):
 
     @with_env('home')
-    def __init__(self, cx_config=None, cache_dir='/tmp/.pyCx-cache'):
+    def __init__(self, cx_config=None, cache_dir='/tmp/.pyCx-cache', log_level=logging.INFO):
+        self._init_logger(log_level)
+        self.logger.debug('initializing ...')
+
         if isinstance(cx_config, CxConfig):
             self._config = cx_config.value()
 
         # init CxQuery
-        self._query = CxQuery(self, cache_dir=cache_dir)
+        self._query = CxQuery(self, cache_dir=cache_dir, logger=logging)
 
     def get_query(self):
         return self._query
@@ -56,3 +61,18 @@ class Cx(object):
             return status, header, content
         finally:
             connection.close()
+
+    def _init_logger(self, log_level):
+        # init logger
+        logging.basicConfig(
+            level=log_level,
+            format='%(levelname)-8s %(asctime)s %(name)-12s %(message)s',
+            datefmt='%Y/%m/%d %H:%M:%S'
+        )
+        logging.StreamHandler(sys.stdout)
+        logging.addLevelName(logging.INFO, "\033[1;36m%s\033[1;0m   " % logging.getLevelName(logging.INFO))
+        logging.addLevelName(logging.DEBUG, "\033[1;35m%s\033[1;0m  " % logging.getLevelName(logging.DEBUG))
+        logging.addLevelName(logging.WARNING, "\033[1;33m%s\033[1;0m" % logging.getLevelName(logging.WARNING))
+        logging.addLevelName(logging.ERROR, "\033[1;41m%s\033[1;0m  " % logging.getLevelName(logging.ERROR))
+        self.logger = logging.getLogger(self.__class__.__name__)
+

@@ -1,6 +1,7 @@
 import os
 import json
 import pickle
+import logging
 
 import pandas as pd
 
@@ -9,7 +10,10 @@ from .cx_filter import CxFilter as CF
 from .helpers import yesterday
 
 class CxQuery(object):
-    def __init__(self, cx, cache_dir='/tmp/.pyCx-cache'):
+    def __init__(self, cx, cache_dir='/tmp/.pyCx-cache', logger=logging):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.debug('initializing ...')
+
         self.cx = cx
         self._config = cx._config
         self._request_data = {}
@@ -21,7 +25,8 @@ class CxQuery(object):
             os.makedirs(cache_dir)
 
     def get_traffic(self, user_token, dates=yesterday()):
-        self.uri(CxenseURL.TRAFFIC) \
+        self.reset() \
+            .uri(CxenseURL.TRAFFIC) \
             .add_filter(CF.User(user_token)) \
             .add_fields(['events', 'uniqueUsers']) \
             .add_dates(dates)
@@ -62,6 +67,7 @@ class CxQuery(object):
         return self
 
     def send(self):
+        self.logger.info('request {} {}'.format(self._request_uri, self._request_data))
         return self.cx.execute(self._request_uri, json.dumps(self._request_data))
 
     """
@@ -93,7 +99,7 @@ class CxQuery(object):
                 data[token] = {
                     'total': 0,
                     'traffic': {},
-                    'fetched': [10**16, 0, 0],
+                    'fetched': [int(1e16), 0, 0],
                     'info': {},
                 }
 
