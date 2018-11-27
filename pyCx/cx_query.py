@@ -58,6 +58,7 @@ class CxQuery(object):
 
     def add_dates(self, dates):
         self._request_data['start'], self._request_data['stop'], self._request_data['historyBuckets'] = dates
+        return self
 
     def reset(self):
         self._request_data = {
@@ -69,6 +70,9 @@ class CxQuery(object):
     def send(self):
         self.logger.info('request {} {}'.format(self._request_uri, self._request_data))
         return self.cx.execute(self._request_uri, json.dumps(self._request_data))
+
+    def dump(self):
+        return self._request_uri, self._request_data
 
     """
     @csv_file -> 'users.csv'
