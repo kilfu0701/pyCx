@@ -47,13 +47,27 @@ class CxQuery(object):
             self._request_data['filters'] = []
 
         if fit['type'] == 'user':
-            fit['group'] = self._group
+            self.add_group(self._group)
 
         self._request_data['filters'].append(fit)
         return self
 
+    def add_field(self, fd=''):
+        return self.add_fields([fd])
+
     def add_fields(self, fds=['uniqueUsers']):
-        self._request_data['fields'] = self._request_data['historyFields'] = fds
+        self._request_data.setdefault('fields', [])
+        self._request_data.setdefault('historyFields', [])
+        self._request_data['fields'] += fds
+        self._request_data['historyFields'] += fds
+        return self
+
+    def add_group(self, group=''):
+        return self.add_groups([group])
+
+    def add_groups(self, groups=[]):
+        self._request_data.setdefault('groups', [])
+        self._request_data['groups'] += groups
         return self
 
     def add_dates(self, dates):
@@ -82,6 +96,7 @@ class CxQuery(object):
     579,f0gnmbksJ1VoNMV8PP18
     3,Js7PQzIrwvSvt4WvMs7X
     """
+    # XXX: maybe this method should be move out of here.
     def get_traffic_by_users(self, csv_file, dates, info_columns=['user_id']):
         df_users = pd.read_csv(csv_file)
         data = {}
