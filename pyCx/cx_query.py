@@ -29,6 +29,7 @@ class CxQuery(object):
             .uri(CxenseURL.TRAFFIC) \
             .add_filter(CF.User(user_token)) \
             .add_fields(['events', 'uniqueUsers']) \
+            .add_history_fields(['events', 'uniqueUsers']) \
             .add_dates(dates)
 
         status, header, content = self.send()
@@ -57,8 +58,14 @@ class CxQuery(object):
 
     def add_fields(self, fds=['uniqueUsers']):
         self._request_data.setdefault('fields', [])
-        self._request_data.setdefault('historyFields', [])
         self._request_data['fields'] += fds
+        return self
+
+    def add_history_field(self, fd=''):
+        return self.add_history_fields([fd])
+
+    def add_history_fields(self, fds=[]):
+        self._request_data.setdefault('historyFields', [])
         self._request_data['historyFields'] += fds
         return self
 

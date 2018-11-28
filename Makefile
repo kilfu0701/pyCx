@@ -1,8 +1,8 @@
 clean:
 	rm -rf ./build ./dist ./pyCx.egg-info
 
-build_sdist:
+build:
 	python setup.py sdist
 
-upload_to_pypi:
+upload:
 	twine upload dist/*.tar.gz
