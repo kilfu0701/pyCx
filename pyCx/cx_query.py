@@ -83,7 +83,9 @@ class CxQuery(object):
         return self
 
     def add_dates(self, dates):
-        self._request_data['start'], self._request_data['stop'], self._request_data['historyBuckets'] = dates
+        self._request_data['start'], self._request_data['stop'] = dates[0:2]
+        if dates[2] > 1:
+            self._request_data['historyBuckets'] = dates[2]
         return self
 
     def reset(self):
