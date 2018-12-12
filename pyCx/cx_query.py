@@ -4,6 +4,7 @@ import pickle
 import logging
 
 import pandas as pd
+import requests
 
 from .cx_url import CxenseURL
 from .cx_filter import CxFilter as CF
@@ -97,20 +98,23 @@ class CxQuery(object):
 
     def send(self):
         self.logger.info('request {} {}'.format(self._request_uri, self._request_data))
-        status, header, content = self.cx.execute(self._request_uri, json.dumps(self._request_data))
 
-        if status != 200 and self._settings['retry']:
+        try:
+            status, header, content = self.cx.execute(self._request_uri, json.dumps(self._request_data))
+            self._retry_count = 0
+            return status, header, content
+        except requests.exceptions.RequestException as e:
             if self._retry_count < self._settings['retry_limit']:
                 self._retry_count += 1
-                self.logger.warn('request failed... status={}, content={}'.format(status, content))
+                self.logger.warn('request failed... error => {}'.format(e))
                 self.logger.warn('retry... {}'.format(self._retry_count))
                 return self.send()
             else:
                 self.logger.error('retry limit reached, Stopped.')
                 exit(1)
-
-        self._retry_count = 0
-        return status, header, content
+        except Exception as e:
+            self.logger.error('some error occured. Error = {}'.format(e))
+            exit(1)
 
     def dump(self):
         return self._request_uri, self._request_data
@@ -122,6 +126,7 @@ class CxQuery(object):
 
     def disable_retry(self):
         self._settings['retry'] = False
+        self._settings['retry_limit'] = 0
         return self
 
     """
