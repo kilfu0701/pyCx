@@ -4,6 +4,7 @@ import pickle
 import logging
 
 import pandas as pd
+import requests
 
 from .cx_url import CxenseURL
 from .cx_filter import CxFilter as CF
@@ -20,6 +21,11 @@ class CxQuery(object):
         self._request_uri = ''
         self._cache_dir = cache_dir
         self._group = ''
+        self._settings = {
+            'retry': False,
+            'retry_limit': 3,
+        }
+        self._retry_count = 0
 
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
@@ -29,6 +35,7 @@ class CxQuery(object):
             .uri(CxenseURL.TRAFFIC) \
             .add_filter(CF.User(user_token)) \
             .add_fields(['events', 'uniqueUsers']) \
+            .add_history_fields(['events', 'uniqueUsers']) \
             .add_dates(dates)
 
         status, header, content = self.send()
@@ -47,17 +54,40 @@ class CxQuery(object):
             self._request_data['filters'] = []
 
         if fit['type'] == 'user':
-            fit['group'] = self._group
+            self.add_group(self._group)
 
         self._request_data['filters'].append(fit)
         return self
 
+    def add_field(self, fd=''):
+        return self.add_fields([fd])
+
     def add_fields(self, fds=['uniqueUsers']):
-        self._request_data['fields'] = self._request_data['historyFields'] = fds
+        self._request_data.setdefault('fields', [])
+        self._request_data['fields'] += fds
+        return self
+
+    def add_history_field(self, fd=''):
+        return self.add_history_fields([fd])
+
+    def add_history_fields(self, fds=[]):
+        self._request_data.setdefault('historyFields', [])
+        self._request_data['historyFields'] += fds
+        return self
+
+    def add_group(self, group=''):
+        return self.add_groups([group])
+
+    def add_groups(self, groups=[]):
+        self._request_data.setdefault('groups', [])
+        self._request_data['groups'] += groups
         return self
 
     def add_dates(self, dates):
-        self._request_data['start'], self._request_data['stop'], self._request_data['historyBuckets'] = dates
+        self._request_data['start'], self._request_data['stop'] = dates[0:2]
+        if dates[2] > 1:
+            self._request_data['historyBuckets'] = dates[2]
+        return self
 
     def reset(self):
         self._request_data = {
@@ -68,7 +98,36 @@ class CxQuery(object):
 
     def send(self):
         self.logger.info('request {} {}'.format(self._request_uri, self._request_data))
-        return self.cx.execute(self._request_uri, json.dumps(self._request_data))
+
+        try:
+            status, header, content = self.cx.execute(self._request_uri, json.dumps(self._request_data))
+            self._retry_count = 0
+            return status, header, content
+        except requests.exceptions.RequestException as e:
+            if self._retry_count < self._settings['retry_limit']:
+                self._retry_count += 1
+                self.logger.warn('request failed... error => {}'.format(e))
+                self.logger.warn('retry... {}'.format(self._retry_count))
+                return self.send()
+            else:
+                self.logger.error('retry limit reached, Stopped.')
+                exit(1)
+        except Exception as e:
+            self.logger.error('some error occured. Error = {}'.format(e))
+            exit(1)
+
+    def dump(self):
+        return self._request_uri, self._request_data
+
+    def enable_retry(self, limit=3):
+        self._settings['retry'] = True
+        self._settings['retry_limit'] = limit
+        return self
+
+    def disable_retry(self):
+        self._settings['retry'] = False
+        self._settings['retry_limit'] = 0
+        return self
 
     """
     @csv_file -> 'users.csv'
@@ -78,6 +137,7 @@ class CxQuery(object):
     579,f0gnmbksJ1VoNMV8PP18
     3,Js7PQzIrwvSvt4WvMs7X
     """
+    # XXX: maybe this method should be move out of here.
     def get_traffic_by_users(self, csv_file, dates, info_columns=['user_id']):
         df_users = pd.read_csv(csv_file)
         data = {}
