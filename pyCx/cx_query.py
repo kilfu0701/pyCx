@@ -103,7 +103,7 @@ class CxQuery(object):
             status, header, content = self.cx.execute(self._request_uri, json.dumps(self._request_data))
             self._retry_count = 0
             return status, header, content
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             if self._retry_count < self._settings['retry_limit']:
                 self._retry_count += 1
                 self.logger.warn('request failed... error => {}'.format(e))
@@ -112,9 +112,6 @@ class CxQuery(object):
             else:
                 self.logger.error('retry limit reached, Stopped.')
                 exit(1)
-        except Exception as e:
-            self.logger.error('some error occured. Error = {}'.format(e))
-            exit(1)
 
     def dump(self):
         return self._request_uri, self._request_data
